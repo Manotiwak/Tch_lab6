@@ -1,0 +1,36 @@
+# Pobranie obrazu bazowego
+FROM alpine:latest
+
+# Instalacja openssh
+RUN apk update && apk add git openssh
+
+# Kopiowanie klucza prywatnego SSH do kontenera
+COPY id_rsa /root/.ssh/id_rsa
+
+# Ustawienie uprawnień dla klucza prywatnego
+RUN chmod 400 /root/.ssh/id_rsa
+
+# Utwórzenie katalogu na kod źródłowy
+RUN mkdir /app
+
+# Przejście do katalogu z kodem źródłowym
+WORKDIR /app
+
+# Klonowanie repozytorium z wykorzystaniem protokołu SSH
+RUN git clone git@github.com:Manotiwak/Tch_lab5.git .
+
+# Budowa obrazu
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/app/.cache \
+    --mount=type=cache,target=/app/vendor \
+    --mount=type=ssh \
+    --frontend=ssh \
+    --local context=. \
+    --local dockerfile=. \
+    --output type=image,name=docker.io/Manotiwak/lab6:v1 \
+    build
+
+LABEL lab6="buildkit"
+
+CMD ["echo", "Sukces"]
